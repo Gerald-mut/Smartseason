@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentDashboard from './pages/AgentDashboard';
+import FieldDetail from './pages/FieldDetail';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -28,11 +29,11 @@ function AppRoutes() {
             </ProtectedRoute>
           } />
 
-          {/* <Route path="/fields/:id" element={
+          <Route path="/fields/:id" element={
             <ProtectedRoute>
               <FieldDetail />
             </ProtectedRoute>
-          } /> */}
+          } />
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
