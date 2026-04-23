@@ -78,19 +78,82 @@ App runs on `http://localhost:5173`
 |---|---|---|
 | Admin | alice@smartseason.com | admin123 |
 | Agent | bob@smartseason.com | agent123 |
-| Agent | carol@smartseason.com | agent123 |
+
 
 ---
 
-## Database Schema
+## Database Setup
+
+This project uses Supabase (PostgreSQL) for data storage.
+
+1. Create a new project on [Supabase](https://supabase.com)
+2. Navigate to the **SQL Editor** in your Supabase dashboard
+3. Paste and run the following SQL to set up the tables, custom types, and triggers:
 
 ```sql
-users         → id, name, email, password_hash, role, created_at
-fields        → id, name, crop_type, planting_date, stage, assigned_agent_id, created_by, last_updated_at, created_at
-field_updates → id, field_id, agent_id, stage, notes, created_at
+-- 1. Custom types
+CREATE TYPE user_role AS ENUM ('admin', 'agent');
+CREATE TYPE field_stage AS ENUM ('Planted', 'Growing', 'Ready', 'Harvested');
+
+-- 2. Users
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role user_role NOT NULL DEFAULT 'agent',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Fields
+CREATE TABLE fields (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  crop_type VARCHAR(100) NOT NULL,
+  planting_date DATE NOT NULL,
+  stage field_stage NOT NULL DEFAULT 'Planted',
+  assigned_agent_id INT REFERENCES users(id) ON DELETE SET NULL,
+  created_by INT NOT NULL REFERENCES users(id),
+  last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Field updates (audit log)
+CREATE TABLE field_updates (
+  id SERIAL PRIMARY KEY,
+  field_id INT NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
+  agent_id INT NOT NULL REFERENCES users(id),
+  stage field_stage NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. Trigger to keep last_updated_at current on fields
+CREATE OR REPLACE FUNCTION update_last_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.last_updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER fields_last_updated
+  BEFORE UPDATE ON fields
+  FOR EACH ROW
+  EXECUTE FUNCTION update_last_updated_at();
 ```
 
-The full schema is in `backend/schema.sql`.
+4. Copy your **connection string** from Supabase → Settings → Database → Connection string (URI mode) and paste it as `DATABASE_URL` in your `backend/.env`
+
+---
+
+## Database Schema & Logic
+
+The system uses a relational PostgreSQL schema with three core tables:
+
+- `users` — stores authentication details and roles (`admin` vs `agent`). Roles are enforced as a PostgreSQL ENUM so invalid values are rejected at the database level.
+- `fields` — core field data including crop type, planting date, and the current stage. `last_updated_at` is automatically maintained by a database trigger on every update — this is what the "At Risk" status logic reads from.
+- `field_updates` — an append-only audit log of every stage change made by agents, including the note left at the time. The `fields` table holds current state; this table holds the full history.
 
 ---
 
@@ -126,7 +189,7 @@ All routes except `/api/auth/*` require a `Authorization: Bearer <token>` header
 
 ### Field status logic
 
-Each field has a computed status derived from two data points — its current stage and when it was last updated:
+Each field has a computed status derived from two data points its current stage and when it was last updated:
 
 ```
 Completed → stage is 'Harvested'
@@ -134,7 +197,7 @@ At Risk   → stage is not 'Harvested' AND no update in the last 7 days
 Active    → everything else
 ```
 
-Status is computed at query time in a pure function (`computeStatus`) rather than stored in the database. This keeps the DB as a source of truth for raw data only, and means status always reflects reality without needing triggers or scheduled jobs. The 7-day threshold is a reasonable default for a crop monitoring system — a field with no activity for a week warrants attention.
+Status is computed at query time in a pure function (`computeStatus`) rather than stored in the database. This keeps the DB as a source of truth for raw data only, and means status always reflects reality without needing triggers or scheduled jobs. The 7-day threshold is a reasonable default for a crop monitoring system a field with no activity for a week warrants attention.
 
 The same function is duplicated in both the backend (for API responses) and the frontend (for the detail page) to avoid an extra network round trip. In a production system this logic would live in a shared package.
 
@@ -145,25 +208,25 @@ Two roles with distinct access patterns:
 - **Admin** can create fields, assign agents, view all fields across all agents, and monitor updates. They cannot post field updates themselves.
 - **Agent** can only see fields assigned to them, post stage updates and notes. They cannot create fields or see other agents' work.
 
-Role is embedded in the JWT payload so every request carries its own permission context — no extra DB lookup needed per request.
+Role is embedded in the JWT payload so every request carries its own permission context no extra DB lookup needed per request.
 
 ### Audit log vs current state
 
-Field updates are stored in a separate `field_updates` table rather than just overwriting the field record. This gives a full audit trail — who changed what, when, and what note they left. The `fields` table holds current state; `field_updates` holds history. These are separate concerns and kept separate.
+Field updates are stored in a separate `field_updates` table rather than just overwriting the field record. This gives a full audit trail who changed what, when, and what note they left. The `fields` table holds current state; `field_updates` holds history. These are separate concerns and kept separate.
 
 ### Dashboard is role-aware at the API level
 
-A single `/api/fields/dashboard` endpoint serves both roles. The controller checks `req.user.role` and queries accordingly — admins get all fields, agents get their assigned fields. Same endpoint, same response shape, different data. This keeps the frontend simple — both dashboards hit the same URL.
+A single `/api/fields/dashboard` endpoint serves both roles. The controller checks `req.user.role` and queries accordingly admins get all fields, agents get their assigned fields. Same endpoint, same response shape, different data. This keeps the frontend simple — both dashboards hit the same URL.
 
 ---
 
 ## Assumptions Made
 
-- Agents are created by the system administrator (via the `/register` endpoint or seed script) — there is no self-signup flow.
+- Agents are created by the system administrator (via the `/register` endpoint or seed script) there is no self-signup flow.
 - A field can only be assigned to one agent at a time.
-- Admins can view field detail and update history but do not post field updates themselves — that is the agent's responsibility.
+- Admins can view field detail and update history but do not post field updates themselves that is the agent's responsibility.
 - The 7-day "At Risk" threshold is a sensible default for the Kenyan growing season context but could be made configurable per crop type in a future iteration.
-- Stage progression is not strictly enforced — an agent can set any stage on any update. This was a deliberate choice to keep the system flexible (a field might need to be corrected, or stages might not always progress linearly in practice).
+- Stage progression is not strictly enforced an agent can set any stage on any update. This was a deliberate choice to keep the system flexible (a field might need to be corrected, or stages might not always progress linearly in practice).
 
 ---
 
@@ -186,7 +249,6 @@ smartseason/
 │   │   ├── app.js
 │   │   ├── db.js
 │   │   └── seed.js
-│   ├── schema.sql
 │   └── package.json
 └── frontend/
     ├── src/
