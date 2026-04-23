@@ -3,6 +3,10 @@
 A full-stack web application for tracking crop progress across multiple fields during a growing season. Built as a technical assessment for Shamba Records.
 
 ---
+## Deployment
+Frontend: Hosted on Vercel ([[Link](https://smartseason-eight.vercel.app)])
+
+Backend: Hosted on Render ([Link](https://smartseason-acq9.onrender.com))
 
 ## Tech Stack
 
