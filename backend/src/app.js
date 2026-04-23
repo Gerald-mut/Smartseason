@@ -7,7 +7,7 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: ['smartseason-7g5j2aja6-geralds-projects-e54ebd73.vercel.app', 'http://localhost:5173'],
+  origin: ['smartseason-5u4u6bv3z-geralds-projects-e54ebd73.vercel.app', 'http://localhost:5173'],
   credentials: true
 }));
 
