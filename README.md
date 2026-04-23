@@ -177,7 +177,7 @@ PUT  /api/fields/:id           → update field (admin only)
 
 ### Updates
 ```
-POST /api/updates              → post a field update (admin + agent)
+POST /api/updates              → post a field update (agent)
 GET  /api/updates/:field_id    → get update history for a field
 ```
 
@@ -207,7 +207,7 @@ Two roles with distinct access patterns:
 
 - **Admin** can create fields, assign agents, view all fields across all agents, and monitor updates. They cannot post field updates themselves.
 - **Agent** can only see fields assigned to them, post stage updates and notes. They cannot create fields or see other agents' work.
-
+Access control is enforced at the API layer. For example, when fetching a field by ID, the backend verifies that either the user is an admin or the field is assigned to them. This prevents unauthorized access even if a user attempts to call the API directly.
 Role is embedded in the JWT payload so every request carries its own permission context no extra DB lookup needed per request.
 
 ### Audit log vs current state
@@ -220,6 +220,13 @@ A single `/api/fields/dashboard` endpoint serves both roles. The controller chec
 
 ---
 
+### Validation & Error Handling
+
+Basic validation is applied at the API layer (e.g., required fields, valid stages). 
+Unauthorized access attempts return appropriate HTTP status codes (403/401). 
+Errors are handled consistently to provide predictable API responses.
+
+
 ## Assumptions Made
 
 - Agents are created by the system administrator (via the `/register` endpoint or seed script) there is no self-signup flow.
@@ -229,6 +236,14 @@ A single `/api/fields/dashboard` endpoint serves both roles. The controller chec
 - Stage progression is not strictly enforced an agent can set any stage on any update. This was a deliberate choice to keep the system flexible (a field might need to be corrected, or stages might not always progress linearly in practice).
 
 ---
+
+The backend follows a layered structure:
+- controllers handle request/response
+- routes define API structure
+- middleware handles cross-cutting concerns like auth
+
+This keeps concerns separated and makes the codebase easier to extend.
+
 
 ## Project Structure
 
