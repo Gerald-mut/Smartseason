@@ -6,7 +6,7 @@ const register = async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
-    // 1. Check if email already exists
+    //check if email already exists
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('id')
@@ -17,10 +17,10 @@ const register = async (req, res) => {
       return res.status(409).json({ message: 'Email already in use' });
     }
 
-    // 2. Hash the password
+    //hash the password
     const password_hash = await bcrypt.hash(password, 10);
 
-    // 3. Insert the new user
+    //add the new user
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert([
@@ -42,7 +42,7 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // 1. Find user by email
+    //find user using their email
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('*')
@@ -53,13 +53,13 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // 2. Compare password
+    //compare password
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // 3. Sign JWT
+    //sign JWT
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
