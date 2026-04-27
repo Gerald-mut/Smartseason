@@ -4,6 +4,8 @@ import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import FieldCard from '../components/FieldCard';
 import StatusBadge from '../components/StatusBadge';
+import styles from './AdminDashboard.module.css';
+
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
@@ -39,7 +41,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) return <div style={styles.loading}>Loading...</div>;
+  if (loading) return <div className={styles.loading}>Loading...</div>;
 
   const { summary, fields } = data;
   const filtered = filter === 'All' ? fields : fields.filter(f => f.status === filter);
@@ -47,57 +49,57 @@ export default function AdminDashboard() {
   return (
     <div>
       <Navbar />
-      <div style={styles.page}>
+      <div className={styles.page}>
 
         {/* Summary cards */}
-        <div style={styles.summaryRow}>
+        <div className={styles.summaryRow}>
           {[
             { label: 'Total Fields', value: summary.total, color: '#1a6b3c' },
             { label: 'Active',       value: summary.active, color: '#1a6b3c' },
             { label: 'At Risk',      value: summary.at_risk, color: '#b45309' },
             { label: 'Completed',    value: summary.completed, color: '#3730a3' },
           ].map(s => (
-            <div key={s.label} style={styles.summaryCard}>
-              <span style={{ ...styles.summaryNum, color: s.color }}>{s.value}</span>
-              <span style={styles.summaryLabel}>{s.label}</span>
+            <div key={s.label} className={styles.summaryCard}>
+              <span className={styles.summaryNum} style={{ color: s.color }}>{s.value}</span>
+              <span className={styles.summaryLabel}>{s.label}</span>
             </div>
           ))}
         </div>
 
         {/* Header row */}
-        <div style={styles.headerRow}>
-          <h2 style={styles.heading}>Fields</h2>
-          <button style={styles.addBtn} onClick={() => setShowForm(v => !v)}>
+        <div className={styles.headerRow}>
+          <h2 className={styles.heading}>Fields</h2>
+          <button className={styles.addBtn} onClick={() => setShowForm(v => !v)}>
             {showForm ? 'Cancel' : '+ Add Field'}
           </button>
         </div>
 
         {/* Create field form */}
         {showForm && (
-          <form onSubmit={handleCreate} style={styles.form}>
+          <form onSubmit={handleCreate} className={styles.form}>
             <input
-              style={styles.input}
+              className={styles.input}
               placeholder="Field name"
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               required
             />
             <input
-              style={styles.input}
+              className={styles.input}
               placeholder="Crop type"
               value={form.crop_type}
               onChange={(e) => setForm({ ...form, crop_type: e.target.value })}
               required
             />
             <input
-              style={styles.input}
+              className={styles.input}
               type="date"
               value={form.planting_date}
               onChange={e => setForm({ ...form, planting_date: e.target.value })}
               required
             />
             <select
-              style={styles.input}
+              className={styles.input}
               value={form.assigned_agent_id}
               onChange={e => setForm({ ...form, assigned_agent_id: e.target.value })}
             >
@@ -106,16 +108,16 @@ export default function AdminDashboard() {
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>
-            <button style={styles.addBtn} type="submit">Create Field</button>
+            <button className={styles.addBtn} type="submit">Create Field</button>
           </form>
         )}
 
         {/* Filter tabs */}
-        <div style={styles.filterRow}>
+        <div className={styles.filterRow}>
           {['All', 'Active', 'At Risk', 'Completed'].map(f => (
             <button
               key={f}
-              style={{ ...styles.filterBtn, ...(filter === f ? styles.filterActive : {}) }}
+              className={filter === f ? `${styles.filterBtn} ${styles.filterActive}` : styles.filterBtn}
               onClick={() => setFilter(f)}
             >
               {f}
@@ -125,9 +127,9 @@ export default function AdminDashboard() {
 
         {/* Field grid */}
         {filtered.length === 0
-          ? <p style={styles.empty}>No fields found.</p>
+          ? <p className={styles.empty}>No fields found.</p>
           : (
-            <div style={styles.grid}>
+            <div className={styles.grid}>
               {filtered.map(field => <FieldCard key={field.id} field={field} />)}
             </div>
           )
@@ -137,77 +139,3 @@ export default function AdminDashboard() {
   );
 }
 
-const styles = {
-  page: { maxWidth: 960, margin: '0 auto', padding: '1.5rem' },
-  loading: { padding: '2rem', textAlign: 'center' },
-  summaryRow: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-  },
-  summaryCard: {
-    background: '#fff',
-    borderRadius: 10,
-    padding: '1.1rem',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 4,
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-  },
-  summaryNum: { fontSize: 32, fontWeight: 700 },
-  summaryLabel: { fontSize: 13, color: '#666' },
-  headerRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem',
-  },
-  heading: { fontSize: 18, fontWeight: 600 },
-  addBtn: {
-    background: '#1a6b3c',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 8,
-    padding: '0.5rem 1.1rem',
-    fontSize: 14,
-    fontWeight: 500,
-  },
-  form: {
-    background: '#fff',
-    borderRadius: 10,
-    padding: '1.2rem',
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '0.75rem',
-    marginBottom: '1rem',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-  },
-  input: {
-    padding: '0.6rem 0.8rem',
-    borderRadius: 7,
-    border: '1px solid #ddd',
-    fontSize: 14,
-  },
-  filterRow: { display: 'flex', gap: '0.5rem', marginBottom: '1rem' },
-  filterBtn: {
-    padding: '5px 14px',
-    borderRadius: 20,
-    border: '1px solid #ddd',
-    background: '#fff',
-    fontSize: 13,
-    color: '#555',
-  },
-  filterActive: {
-    background: '#1a6b3c',
-    color: '#fff',
-    border: '1px solid #1a6b3c',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-    gap: '1rem',
-  },
-  empty: { color: '#888', textAlign: 'center', padding: '2rem' },
-};

@@ -1,0 +1,113 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summaryCard {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+}
+
+.summaryNum {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.summaryLabel {
+  font-size: 13px;
+  color: #666;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.addBtn {
+  background: #1a6b3c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.form {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+}
+
+.input {
+  padding: 0.6rem 0.8rem;
+  border-radius: 7px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filterBtn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+}
+
+.filterActive {
+  background: #1a6b3c;
+  color: #fff;
+  border: 1px solid #1a6b3c;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.empty {
+  color: #888;
+  text-align: center;
+  padding: 2rem;
+}
