@@ -188,6 +188,8 @@ GET  /api/updates/:field_id    → get update history for a field
 All routes except `/api/auth/*` require a `Authorization: Bearer <token>` header.
 
 ---
+## Use of AI 
+I used an AI tool to help brainstorm standard, clean UI patterns to ensure a good user experience, but all the architectural decisions, component structuring, and logic implementation are my own.
 
 ## Design Decisions
 
